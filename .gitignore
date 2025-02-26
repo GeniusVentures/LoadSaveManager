@@ -30,3 +30,17 @@
 *.exe
 *.out
 *.app
+
+# General folder
+.build/
+Rel/
+Release
+Debug/
+
+# VS IDE
+.vscode/
+.vs/
+# Eclipse IDE
+.cproject
+.project
+.settings/
