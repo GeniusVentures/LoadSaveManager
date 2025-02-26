@@ -50,14 +50,18 @@ namespace sgns
         //Disclude certain older insecure options
         ssl_context->set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3);
 
-        //Default trusted authority definitions
-        ssl_context->set_default_verify_paths();
+        
 
         //Consider setting verify callback to check whether domain name matches cert
         // ssl_context->set_verify_callback(...);
         //Create Socket with SSL Context
         auto socket = std::make_shared<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>(*ioc, *ssl_context);
-
+        if (!SSL_set_tlsext_host_name(socket->native_handle(), http_host_.c_str())) {
+            unsigned long err = ERR_get_error();
+            throw std::runtime_error("Failed to set SNI: " + std::string(ERR_reason_error_string(err)));
+            status(CustomResult(sgns::AsyncError::outcome::failure("Could not set SNI")));
+        }
+        
         //Connect socket
         status(CustomResult(sgns::AsyncError::outcome::success(Success{ "Starting HTTP Connection" })));
         socket->lowest_layer().async_connect(endpoint, [self = shared_from_this(), ioc, socket, handle_read, status](const boost::system::error_code& connect_error)
